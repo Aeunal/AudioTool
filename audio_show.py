@@ -12,6 +12,8 @@ CHANNELS = 1
 RATE = 44100 # Slow:8000 / Med:16000 / Fast:44100
 FRAMES_PER_BUFFER = 2048 # Med:1024 / Slow:2048
 
+SPECGRAM_UPDATE_COUNTER = 10  # Update the spectrogram every 10 frames
+
 # Custom colors
 bg_color = "#1c3a3a"
 button_color = "#2b6e6e"
@@ -59,8 +61,8 @@ for a in [ax1, ax2]:
 root = tk.Tk()
 #Set the geometry
 root.geometry("550x450")
-top = tk.Frame(root)
-top.pack(side=tk.TOP)
+top = tk.Frame(root, bg=bg_color)
+top.pack(side=tk.TOP, pady=10)
 root.title("Real-time Audio Waveform and Spectrogram")
 root.configure(bg=bg_color)
 
@@ -75,9 +77,9 @@ def stop_recording():
 
 # Create start and stop buttons
 start_button = tk.Button(root, text="Start Recording", command=start_recording, bg=button_color, fg=text_color, width=20, height=2)
-start_button.pack(in_=top,side=tk.LEFT)
+start_button.pack(in_=top,side=tk.LEFT, padx=5)
 stop_button = tk.Button(root, text="Stop Recording", command=stop_recording, bg=button_color, fg=text_color, width=20, height=2)
-stop_button.pack(in_=top,side=tk.LEFT)
+stop_button.pack(in_=top,side=tk.LEFT, padx=5)
 
 
 canvas = FigureCanvasTkAgg(fig, master=root)
@@ -91,7 +93,7 @@ def callback(in_data, frame_count, time_info, status):
     audio_data = np.frombuffer(in_data, dtype=np.int16)
     line.set_ydata(audio_data)
     
-    if counter % 10 == 0:  # Update the visualization every 5 frames
+    if counter % SPECGRAM_UPDATE_COUNTER == 0:  # Update the visualization every 5 frames
         Pxx, freqs, bins, im = ax2.specgram(audio_data, NFFT=1024, Fs=RATE, noverlap=900, cmap='viridis')
 
     canvas.draw()
