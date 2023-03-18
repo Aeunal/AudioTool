@@ -9,8 +9,8 @@ from matplotlib.gridspec import GridSpec
 # Configure audio settings
 FORMAT = pyaudio.paInt16
 CHANNELS = 1
-RATE = 44100
-FRAMES_PER_BUFFER = 2048 # 1024 
+RATE = 44100 # Slow:8000 / Med:16000 / Fast:44100
+FRAMES_PER_BUFFER = 2048 # Med:1024 / Slow:2048
 
 # Custom colors
 bg_color = "#1c3a3a"
@@ -21,14 +21,14 @@ line_color = "#2b6e6e"
 
 
 # Create a matplotlib figure to display the audio waveform and spectrogram
-fig, (ax1, ax2) = plt.subplots(2, 1)
+fig, (ax1, ax2) = plt.subplots(2, 1, facecolor='black')
 # gs = GridSpec(2, 1, figure=fig)
 
 # ax = fig.add_subplot(gs[0, 0])
 x = np.arange(0, 2 * FRAMES_PER_BUFFER, 2) # 1024 samples at 16 bits/sample
 line, = ax1.plot(x, np.random.rand(FRAMES_PER_BUFFER), color=line_color)
 ax1.set_ylim([-2**15, 2**15 - 1])
-ax1.set_facecolor(plot_bg_color)
+# ax1.set_facecolor(plot_bg_color)
 
 # ax2 = fig.add_subplot(gs[1, 0])
 # Pxx, freqs, bins, im = ax2.specgram(np.random.rand(1024), NFFT=1024, Fs=RATE, noverlap=900, cmap='viridis')
@@ -43,6 +43,7 @@ ax1.set_facecolor(plot_bg_color)
 
 # Customize plot appearance
 for a in [ax1, ax2]:
+    a.set_facecolor(plot_bg_color)
     a.patch.set_facecolor(plot_bg_color)
     a.spines['bottom'].set_color(text_color)
     a.spines['top'].set_color(text_color)
@@ -56,6 +57,10 @@ for a in [ax1, ax2]:
 
 # Create the main window
 root = tk.Tk()
+#Set the geometry
+root.geometry("550x450")
+top = tk.Frame(root)
+top.pack(side=tk.TOP)
 root.title("Real-time Audio Waveform and Spectrogram")
 root.configure(bg=bg_color)
 
@@ -69,30 +74,38 @@ def stop_recording():
     stream.stop_stream()
 
 # Create start and stop buttons
-start_button = tk.Button(root, text="Start Recording", command=start_recording, bg=button_color, fg=text_color)
-start_button.pack()
-stop_button = tk.Button(root, text="Stop Recording", command=stop_recording, bg=button_color, fg=text_color)
-stop_button.pack()
+start_button = tk.Button(root, text="Start Recording", command=start_recording, bg=button_color, fg=text_color, width=20, height=2)
+start_button.pack(in_=top,side=tk.LEFT)
+stop_button = tk.Button(root, text="Stop Recording", command=stop_recording, bg=button_color, fg=text_color, width=20, height=2)
+stop_button.pack(in_=top,side=tk.LEFT)
 
 
 canvas = FigureCanvasTkAgg(fig, master=root)
 canvas.get_tk_widget().pack()
 
+
+counter = 0
 # Callback function to process audio data
 def callback(in_data, frame_count, time_info, status):
+    global counter
     audio_data = np.frombuffer(in_data, dtype=np.int16)
     line.set_ydata(audio_data)
     
-    Pxx, freqs, bins, im = ax2.specgram(audio_data, NFFT=1024, Fs=RATE, noverlap=900, cmap='viridis')
-    canvas.draw()
+    if counter % 10 == 0:  # Update the visualization every 5 frames
+        Pxx, freqs, bins, im = ax2.specgram(audio_data, NFFT=1024, Fs=RATE, noverlap=900, cmap='viridis')
 
     canvas.draw()
+    counter += 1
     return (in_data, pyaudio.paContinue)
 
 # Initialize audio stream
 audio = pyaudio.PyAudio()
 stream = audio.open(format=FORMAT, channels=CHANNELS, rate=RATE, input=True,
                     frames_per_buffer=FRAMES_PER_BUFFER, stream_callback=callback)
+
+
+#Make the window resizable false
+root.resizable(False,False)
 
 # Start the main loop
 root.mainloop()
