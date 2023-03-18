@@ -21,28 +21,28 @@ line_color = "#2b6e6e"
 
 
 # Create a matplotlib figure to display the audio waveform and spectrogram
-fig = plt.figure()
-gs = GridSpec(2, 1, figure=fig)
+fig, (ax1, ax2) = plt.subplots(2, 1)
+# gs = GridSpec(2, 1, figure=fig)
 
-ax = fig.add_subplot(gs[0, 0])
+# ax = fig.add_subplot(gs[0, 0])
 x = np.arange(0, 2 * FRAMES_PER_BUFFER, 2) # 1024 samples at 16 bits/sample
-line, = ax.plot(x, np.random.rand(FRAMES_PER_BUFFER), color=line_color)
-ax.set_ylim([-2**15, 2**15 - 1])
-ax.set_facecolor(plot_bg_color)
+line, = ax1.plot(x, np.random.rand(FRAMES_PER_BUFFER), color=line_color)
+ax1.set_ylim([-2**15, 2**15 - 1])
+ax1.set_facecolor(plot_bg_color)
 
-ax2 = fig.add_subplot(gs[1, 0])
-Pxx, freqs, bins, im = ax2.specgram(np.random.rand(1024), NFFT=1024, Fs=RATE, noverlap=900, cmap='viridis')
-im.set_cmap('viridis')
-ax2.set_ylim([0, RATE // 2])
-ax2.set_xlim([0, 2])
-ax2.set_facecolor(plot_bg_color)
+# ax2 = fig.add_subplot(gs[1, 0])
+# Pxx, freqs, bins, im = ax2.specgram(np.random.rand(1024), NFFT=1024, Fs=RATE, noverlap=900, cmap='viridis')
+# im.set_cmap('viridis')
+# ax2.set_ylim([0, RATE // 2])
+# ax2.set_xlim([0, 2])
+# ax2.set_facecolor(plot_bg_color)
 
 # Set the background color of the spectrogram
-im.set_clim(vmin=0)
-im.set_clim(vmax=1)
+# im.set_clim(vmin=0)
+# im.set_clim(vmax=1)
 
 # Customize plot appearance
-for a in [ax, ax2]:
+for a in [ax1, ax2]:
     a.patch.set_facecolor(plot_bg_color)
     a.spines['bottom'].set_color(text_color)
     a.spines['top'].set_color(text_color)
@@ -56,7 +56,7 @@ for a in [ax, ax2]:
 
 # Create the main window
 root = tk.Tk()
-root.title("Real-time Audio Waveform")
+root.title("Real-time Audio Waveform and Spectrogram")
 root.configure(bg=bg_color)
 
 
@@ -83,9 +83,8 @@ def callback(in_data, frame_count, time_info, status):
     audio_data = np.frombuffer(in_data, dtype=np.int16)
     line.set_ydata(audio_data)
     
-    Pxx, freqs, bins, _ = ax2.specgram(audio_data, NFFT=1024, Fs=RATE, noverlap=900, cmap='viridis', visible=False)
-    # im.set_array(Pxx[:-1, :].ravel())
-    #im.set_array(Pxx[:-1, :-1])
+    Pxx, freqs, bins, im = ax2.specgram(audio_data, NFFT=1024, Fs=RATE, noverlap=900, cmap='viridis')
+    canvas.draw()
 
     canvas.draw()
     return (in_data, pyaudio.paContinue)
